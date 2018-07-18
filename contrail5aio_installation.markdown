@@ -249,6 +249,13 @@ nodes:
    ./tools/deployment/developer/nfs/091-heat-opencontrail.sh
    ```
 
+## verify the installation
+
+```bash
+contrail-status
+kubectl get pods --all-namespaces
+```
+
 ## appendix
 
 ### all commands
@@ -343,6 +350,72 @@ helm install --name contrail ${CHD_PATH}/contrail \
 
 cd ${OSH_PATH}
 ./tools/deployment/developer/nfs/091-heat-opencontrail.sh
+```
+
+### ntp.conf
+
+    root@aio25:~# cat /etc/ntp.conf
+    driftfile /var/lib/ntp/ntp.drift
+    statistics loopstats peerstats clockstats
+    filegen loopstats file loopstats type day enable
+    filegen peerstats file peerstats type day enable
+    filegen clockstats file clockstats type day enable
+    server ntp2.juniper.net
+    pool 0.ubuntu.pool.ntp.org iburst
+    pool 1.ubuntu.pool.ntp.org iburst
+    pool 2.ubuntu.pool.ntp.org iburst
+    pool 3.ubuntu.pool.ntp.org iburst
+    pool ntp.ubuntu.com
+    restrict -4 default kod notrap nomodify nopeer noquery limited
+    restrict -6 default kod notrap nomodify nopeer noquery limited
+    restrict 127.0.0.1
+    restrict ::1
+    restrict source notrap nomodify noquery
+
+### contrail.yaml (indentation matters)
+
+```yaml
+global:
+  contrail_env:
+    CONTROLLER_NODES: 172.17.0.1
+    CONTROL_NODES: ${CONTROL_NODES}
+    VROUTER_GATEWAY: ${VROUTER_GATEWAY}
+    CONTROL_DATA_NET_LIST: ${CONTROL_DATA_NET_LIST}
+    AAA_MODE: rbac
+    CLOUD_ORCHESTRATOR: openstack
+    BGP_ASN: 60227
+    DATABASE_NODEMGR__DEFAULTS__minimum_diskGB: 5
+    CONFIG_NODEMGR__DEFAULTS__minimum_diskGB: 5
+  images:
+    tags:
+      kafka: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-external-kafka:${CONTRAIL_TAG:-latest}"
+      cassandra: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-external-cassandra:${CONTRAIL_TAG:-latest}"
+      redis: "redis:4.0.2"
+      zookeeper: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-external-zookeeper:${CONTRAIL_TAG:-latest}"
+      contrail_control: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-controller-control-control:${CONTRAIL_TAG:-latest}"
+      control_dns: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-controller-control-dns:${CONTRAIL_TAG:-latest}"
+      control_named: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-controller-control-named:${CONTRAIL_TAG:-latest}"
+      config_api: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-controller-config-api:${CONTRAIL_TAG:-latest}"
+      config_devicemgr: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-controller-config-devicemgr:${CONTRAIL_TAG:-latest}"
+      config_schema_transformer: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-controller-config-schema:${CONTRAIL_TAG:-latest}"
+      config_svcmonitor: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-controller-config-svcmonitor:${CONTRAIL_TAG:-latest}"
+      webui_middleware: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-controller-webui-job:${CONTRAIL_TAG:-latest}"
+      webui: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-controller-webui-web:${CONTRAIL_TAG:-latest}"
+      analytics_api: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-analytics-api:${CONTRAIL_TAG:-latest}"
+      contrail_collector: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-analytics-collector:${CONTRAIL_TAG:-latest}"
+      analytics_alarm_gen: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-analytics-alarm-gen:${CONTRAIL_TAG:-latest}"
+      analytics_query_engine: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-analytics-query-engine:${CONTRAIL_TAG:-latest}"
+      analytics_snmp_collector: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-analytics-snmp-collector:${CONTRAIL_TAG:-latest}"
+      contrail_topology: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-analytics-topology:${CONTRAIL_TAG:-latest}"
+      build_driver_init: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-vrouter-kernel-build-init:${CONTRAIL_TAG:-latest}"
+      vrouter_agent: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-vrouter-agent:${CONTRAIL_TAG:-latest}"
+      vrouter_init_kernel: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-vrouter-kernel-init:${CONTRAIL_TAG:-latest}"
+      vrouter_dpdk: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-vrouter-agent-dpdk:${CONTRAIL_TAG:-latest}"
+      vrouter_init_dpdk: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-vrouter-kernel-init-dpdk:${CONTRAIL_TAG:-latest}"
+      nodemgr: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-nodemgr:${CONTRAIL_TAG:-latest}"
+      contrail_status: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-status:${CONTRAIL_TAG:-latest}"
+      node_init: "${CONTRAIL_REGISTRY:-opencontrailnightly}/contrail-node-init:${CONTRAIL_TAG:-latest}"
+      dep_check: quay.io/stackanetes/kubernetes-entrypoint:v0.2.1
 ```
 
 ### installation logs
